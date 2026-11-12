@@ -1,0 +1,38 @@
+
+# GENERAL / IDEs
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+.env
+.env.production
+
+
+# FRONTEND (Angular)
+
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.env
+frontend/.env.local
+#frontend/src/environments
+
+
+# BACKEND (Node.js Lambdas)
+
+backend/**/node_modules/
+backend/**/*.zip
+backend/**/dist/
+backend/**/.env
+
+
+# INFRAESTRUCTURA (Terraform)
+
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/crash.log
+infra/.terraform.lock.hcl # (Opcional: algunos prefieren subirlo, otros no. Subirlo asegura versiones exactas).
+infra/terraform.tfvars    # Para evitar subir credenciales o variables reales locales

@@ -1,0 +1,50 @@
+name: Deploy Validator Lambda
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/validator-lambda/**'
+      - '.github/workflows/deploy-validator.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd backend/validator-lambda
+          if [ -f package.json ]; then npm install; fi
+
+      - name: Package Lambda into ZIP
+        run: |
+          cd backend/validator-lambda
+          zip -r validator-${{ github.sha }}.zip .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update Lambda Code
+        run: |
+          aws lambda update-function-code \
+            --function-name datapipe-validator-dev \
+            --zip-file fileb://backend/validator-lambda/validator-${{ github.sha }}.zip
+
+      - name: Publish Version & Update Live Alias
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          CLEAN_MSG=$(echo "$COMMIT_MSG" | tr "'" " ")
+          VERSION=$(aws lambda publish-version --function-name datapipe-validator-dev --description "$CLEAN_MSG" --query 'Version' --output text)
+          aws lambda update-alias --function-name datapipe-validator-dev --name live --function-version $VERSION

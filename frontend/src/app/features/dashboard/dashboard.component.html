@@ -1,0 +1,74 @@
+<div class="dashboard-container">
+  <header>
+    <h2>Panel de Control - DataPipe</h2>
+    <button (click)="logout()" class="btn-logout">Cerrar Sesión</button>
+  </header>
+
+  <p>Sube tus archivos JSON de forma segura a tu espacio en la nube.</p>
+
+  <!-- Sección de subida -->
+  <div class="upload-section mb-4">
+    <input type="file" (change)="onFileSelected($event)" accept=".json" class="form-control mb-2" />
+    <button (click)="uploadFile()" [disabled]="!selectedFile" class="btn btn-primary">Subir a S3</button>
+    <p class="status mt-2">{{ uploadStatus }}</p>
+  </div>
+
+  <!-- Tabla de Monitoreo (Polling Inteligente) -->
+  <div class="monitoring-section mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4>Monitoreo de Lotes</h4>
+      <button (click)="fetchBatches()" class="btn btn-sm btn-outline-secondary">Actualizar Manual</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Batch ID</th>
+          <th>Estado</th>
+          <th>Procesados</th>
+          <th>Exitosos</th>
+          <th>Fallidos</th>
+          <th>Última Actualización</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let batch of batches">
+          <td><code>{{ batch.SK || batch.batchId }}</code></td>
+          <td>
+            <span class="badge" [ngClass]="{
+              'badge-completed': batch.status === 'COMPLETED',
+              'badge-processing': batch.status === 'PROCESSING',
+              'badge-failed': batch.status === 'FAILED'
+            }">
+              {{ batch.status }}
+            </span>
+          </td>
+          <td>{{ (batch.totalSuccess || 0) + (batch.totalFailed || 0) }} / {{ batch.totalExpected || 'N/A' }}</td>
+          <td class="text-success">{{ batch.totalSuccess || 0 }}</td>
+          <td class="text-danger">{{ batch.totalFailed || 0 }}</td>
+          <td>{{ batch.updatedAt | date:'mediumTime' }}</td>
+
+          <!-- ACCIONES DE DESCARGA (Solo visibles si el estado es COMPLETED) -->
+          <td>
+            <ng-container *ngIf="batch.status === 'COMPLETED'">
+              <button
+                class="btn btn-sm btn-outline-warning me-1"
+                (click)="downloadJsonCorrection(batch.SK.replace('BATCH#', ''))"
+                title="Descargar JSON solo con errores para corregir">
+                📄 JSON Errores
+              </button>
+              <button
+                class="btn btn-sm btn-outline-danger"
+                (click)="downloadPdfReport(batch.SK.replace('BATCH#', ''))"
+                title="Descargar reporte completo en PDF">
+                📊 Reporte PDF
+              </button>
+            </ng-container>
+            <span *ngIf="batch.status !== 'COMPLETED'" class="text-muted small">Procesando...</span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

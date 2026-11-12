@@ -1,0 +1,58 @@
+name: Deploy Email Lambda
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/email-lambda/**'
+      - '.github/workflows/deploy-email.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd backend/email-lambda
+          if [ -f package.json ]; then npm install; fi
+
+      - name: Package Lambda into ZIP
+        #mueve a backend -> la carpeta email-lambda y crea un zip con el email-commit.zip
+        run: |
+          cd backend/email-lambda
+          zip -r email-${{ github.sha }}.zip .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update Lambda Code
+        #toma el nuevo zip que creamos e inyecta
+        #necesitamos el nombre original que dio terraform
+        #la ruta backend/email-lambda/nomnbre nuevo con commit
+        run: |
+          aws lambda update-function-code \
+            --function-name datapipe-auto-confirm-dev \
+            --zip-file fileb://backend/email-lambda/email-${{ github.sha }}.zip
+
+      - name: Publish Version & Update Live Alias
+        #Primer comando nombre dle commit
+        #segundo es para limíar espacios
+        #3 necesitamos el numero de serie luego de publicar la nueva version con su descripcion commit
+        #4 update de la antigua funcion, cambiamos a donde apunta live, por eso necesitamos el version del nuevo commit
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          CLEAN_MSG=$(echo "$COMMIT_MSG" | tr "'" " ")
+          VERSION=$(aws lambda publish-version --function-name datapipe-auto-confirm-dev --description "$CLEAN_MSG" --query 'Version' --output text)
+          aws lambda update-alias --function-name datapipe-auto-confirm-dev --name live --function-version $VERSION

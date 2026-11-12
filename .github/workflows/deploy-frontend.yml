@@ -1,0 +1,55 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+jobs:
+  deploy-front:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run Targeted Unit Test
+        run: |
+          cd frontend
+          npm test -- --watch=false --browsers=ChromeHeadless --include='**/upload.service.spec.ts'
+
+      - name: Build Angular App with Environment Variables
+        env:
+          NG_APP_API_URL: ${{ secrets.API_URL }}
+          NG_APP_COGNITO_REGION: eu-west-1
+          NG_APP_COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_POOL_ID }}
+          NG_APP_COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
+        run: |
+          cd frontend
+          npm run build -- --configuration production
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync frontend/dist/frontend/browser s3://datapipe-frontend-hosting-lab-eu-west-1 --delete
+
+      - name: Invalidate CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id E30BYY2ZW3IGAM --paths "/*"

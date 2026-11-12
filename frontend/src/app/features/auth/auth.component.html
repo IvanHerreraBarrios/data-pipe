@@ -1,0 +1,25 @@
+<div style="margin: 50px; font-family: sans-serif;">
+  <h2>{{ isRegistering ? 'Registro en DataPipe' : 'Login en DataPipe' }}</h2>
+
+  <form (submit)="onSubmit(); $event.preventDefault()">
+    <div>
+      <label>Email:</label><br>
+      <input type="email" [(ngModel)]="email" name="email" required style="padding: 8px; width: 300px; margin-bottom: 10px;">
+    </div>
+    <div>
+      <label>Contraseña:</label><br>
+      <input type="password" [(ngModel)]="password" name="password" required style="padding: 8px; width: 300px; margin-bottom: 15px;">
+    </div>
+
+    <button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer;">
+      {{ isRegistering ? 'Registrarse' : 'Iniciar Sesión' }}
+    </button>
+  </form>
+
+  <p *ngIf="message" style="color: green; margin-top: 15px;">{{ message }}</p>
+  <p *ngIf="errorMessage" style="color: red; margin-top: 15px;">{{ errorMessage }}</p>
+
+  <p style="margin-top: 20px; cursor: pointer; color: blue; text-decoration: underline;" (click)="toggleMode()">
+    {{ isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate' }}
+  </p>
+</div>
