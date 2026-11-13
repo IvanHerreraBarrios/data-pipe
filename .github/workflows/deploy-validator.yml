@@ -40,12 +40,16 @@ jobs:
       - name: Update Lambda Code
         run: |
           aws lambda update-function-code \
-            --function-name datapipe-validator-dev \
+            --function-name datapipe-validator-lab \
             --zip-file fileb://backend/validator-lambda/validator-${{ github.sha }}.zip
+
+      - name: Wait for Lambda update to finish
+        run: |
+          aws lambda wait function-updated --function-name datapipe-validator-lab
 
       - name: Publish Version & Update Live Alias
         run: |
           COMMIT_MSG="${{ github.event.head_commit.message }}"
           CLEAN_MSG=$(echo "$COMMIT_MSG" | tr "'" " ")
-          VERSION=$(aws lambda publish-version --function-name datapipe-validator-dev --description "$CLEAN_MSG" --query 'Version' --output text)
-          aws lambda update-alias --function-name datapipe-validator-dev --name live --function-version $VERSION
+          VERSION=$(aws lambda publish-version --function-name datapipe-validator-lab --description "$CLEAN_MSG" --query 'Version' --output text)
+          aws lambda update-alias --function-name datapipe-validator-lab --name live --function-version $VERSION
