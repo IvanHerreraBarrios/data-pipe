@@ -24,6 +24,12 @@ jobs:
           cd backend/splitter-lambda
           if [ -f package.json ]; then npm install; fi
 
+      - name: Install dependencies & Run Tests
+        #corren los test
+        run: |
+          cd backend/splitter-lambda
+          if [ -f package.json ]; then npm install && npm test; fi
+
       - name: Package Lambda into ZIP
         run: |
           cd backend/splitter-lambda

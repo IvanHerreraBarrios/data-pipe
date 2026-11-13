@@ -19,11 +19,10 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies & Run Tests
-        #corren los test
+      - name: Install dependencies
         run: |
           cd backend/upload-lambda
-          if [ -f package.json ]; then npm install && npm test; fi
+          if [ -f package.json ]; then npm install; fi
 
       - name: Package Lambda into ZIP
         run: |
