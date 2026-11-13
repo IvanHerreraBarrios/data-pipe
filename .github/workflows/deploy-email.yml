@@ -44,7 +44,7 @@ jobs:
         #la ruta backend/email-lambda/nomnbre nuevo con commit
         run: |
           aws lambda update-function-code \
-            --function-name datapipe-auto-confirm-dev \
+            --function-name datapipe-auto-confirm-lab \
             --zip-file fileb://backend/email-lambda/email-${{ github.sha }}.zip
 
       - name: Publish Version & Update Live Alias
@@ -55,5 +55,5 @@ jobs:
         run: |
           COMMIT_MSG="${{ github.event.head_commit.message }}"
           CLEAN_MSG=$(echo "$COMMIT_MSG" | tr "'" " ")
-          VERSION=$(aws lambda publish-version --function-name datapipe-auto-confirm-dev --description "$CLEAN_MSG" --query 'Version' --output text)
-          aws lambda update-alias --function-name datapipe-auto-confirm-dev --name live --function-version $VERSION
+          VERSION=$(aws lambda publish-version --function-name datapipe-auto-confirm-lab --description "$CLEAN_MSG" --query 'Version' --output text)
+          aws lambda update-alias --function-name datapipe-auto-confirm-lab --name live --function-version $VERSION
