@@ -36,17 +36,21 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: us-east-1
+          aws-region: eu-west-1
 
       - name: Update Lambda Code
         run: |
           aws lambda update-function-code \
-            --function-name datapipe-upload-dev \
+            --function-name datapipe-upload-lab \
             --zip-file fileb://backend/upload-lambda/upload-${{ github.sha }}.zip
+
+      - name: Wait for Lambda update to finish
+        run: |
+          aws lambda wait function-updated --function-name datapipe-upload-lab
 
       - name: Publish Version & Update Live Alias
         run: |
           COMMIT_MSG="${{ github.event.head_commit.message }}"
           CLEAN_MSG=$(echo "$COMMIT_MSG" | tr "'" " ")
-          VERSION=$(aws lambda publish-version --function-name datapipe-upload-dev --description "$CLEAN_MSG" --query 'Version' --output text)
-          aws lambda update-alias --function-name datapipe-upload-dev --name live --function-version $VERSION
+          VERSION=$(aws lambda publish-version --function-name datapipe-upload-lab --description "$CLEAN_MSG" --query 'Version' --output text)
+          aws lambda update-alias --function-name datapipe-upload-lab --name live --function-version $VERSION
