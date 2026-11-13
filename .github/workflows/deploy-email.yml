@@ -46,7 +46,7 @@ jobs:
           aws lambda update-function-code \
             --function-name datapipe-auto-confirm-lab \
             --zip-file fileb://backend/email-lambda/email-${{ github.sha }}.zip
-          
+
       - name: Wait for Lambda update to finish
         run: |
           aws lambda wait function-updated --function-name datapipe-auto-confirm-lab
